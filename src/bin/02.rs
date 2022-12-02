@@ -37,33 +37,27 @@ impl PlayerMove {
     }
 
     fn outcome(&self, other: PlayerMove) -> i32 {
-        let value = match self {
-            Self::Rock => {
-                self.value()
-                    + match other {
-                        PlayerMove::Rock => 3,
-                        PlayerMove::Paper => 0,
-                        PlayerMove::Scissors => 6,
-                    }
+        let value = self.value()
+            + match self {
+                Self::Rock => match other {
+                    PlayerMove::Rock => PlayerOutcome::Draw,
+                    PlayerMove::Paper => PlayerOutcome::Lose,
+                    PlayerMove::Scissors => PlayerOutcome::Win,
+                },
+                Self::Paper => match other {
+                    PlayerMove::Rock => PlayerOutcome::Win,
+                    PlayerMove::Paper => PlayerOutcome::Draw,
+                    PlayerMove::Scissors => PlayerOutcome::Lose,
+                },
+                Self::Scissors => match other {
+                    PlayerMove::Rock => PlayerOutcome::Lose,
+                    PlayerMove::Paper => PlayerOutcome::Win,
+                    PlayerMove::Scissors => PlayerOutcome::Draw,
+                },
             }
-            Self::Paper => {
-                self.value()
-                    + match other {
-                        PlayerMove::Rock => 6,
-                        PlayerMove::Paper => 3,
-                        PlayerMove::Scissors => 0,
-                    }
-            }
-            Self::Scissors => {
-                self.value()
-                    + match other {
-                        PlayerMove::Rock => 0,
-                        PlayerMove::Paper => 6,
-                        PlayerMove::Scissors => 3,
-                    }
-            }
-        };
-        println!("{:?} plays {:?} outcome {}", self, other, value);
+            .value();
+
+        //println!("{:?} plays {:?} outcome {}", self, other, value);
         value
     }
 }
@@ -87,34 +81,27 @@ impl PlayerOutcome {
     }
 
     fn outcome(&self, other: PlayerMove) -> i32 {
-        let value = match self {
-            Self::Lose => {
-                self.value()
-                    + match other {
-                        PlayerMove::Rock => PlayerMove::Scissors.value(),
-                        PlayerMove::Paper => PlayerMove::Rock.value(),
-                        PlayerMove::Scissors => PlayerMove::Paper.value(),
-                    }
+        let value = self.value()
+            + match self {
+                Self::Lose => match other {
+                    PlayerMove::Rock => PlayerMove::Scissors,
+                    PlayerMove::Paper => PlayerMove::Rock,
+                    PlayerMove::Scissors => PlayerMove::Paper,
+                },
+                Self::Draw => match other {
+                    PlayerMove::Rock => PlayerMove::Rock,
+                    PlayerMove::Paper => PlayerMove::Paper,
+                    PlayerMove::Scissors => PlayerMove::Scissors,
+                },
+                Self::Win => match other {
+                    PlayerMove::Rock => PlayerMove::Paper,
+                    PlayerMove::Paper => PlayerMove::Scissors,
+                    PlayerMove::Scissors => PlayerMove::Rock,
+                },
             }
-            Self::Draw => {
-                self.value()
-                    + match other {
-                        PlayerMove::Rock => PlayerMove::Rock.value(),
-                        PlayerMove::Paper => PlayerMove::Paper.value(),
-                        PlayerMove::Scissors => PlayerMove::Scissors.value(),
-                    }
-            }
-            Self::Win => {
-                self.value()
-                    + match other {
-                        PlayerMove::Rock => PlayerMove::Paper.value(),
-                        PlayerMove::Paper => PlayerMove::Scissors.value(),
-                        PlayerMove::Scissors => PlayerMove::Rock.value(),
-                    }
-            }
-        };
+            .value();
 
-        println!("{:?} plays {:?} outcome {}", self, other, value);
+        //println!("{:?} plays {:?} outcome {}", self, other, value);
         value
     }
 }
