@@ -39,7 +39,7 @@ impl PlayerMove {
     fn outcome(&self, other: PlayerMove) -> i32 {
         let value = match self {
             Self::Rock => {
-                PlayerMove::Rock.value()
+                self.value()
                     + match other {
                         PlayerMove::Rock => 3,
                         PlayerMove::Paper => 0,
@@ -47,7 +47,7 @@ impl PlayerMove {
                     }
             }
             Self::Paper => {
-                PlayerMove::Paper.value()
+                self.value()
                     + match other {
                         PlayerMove::Rock => 6,
                         PlayerMove::Paper => 3,
@@ -55,7 +55,7 @@ impl PlayerMove {
                     }
             }
             Self::Scissors => {
-                PlayerMove::Scissors.value()
+                self.value()
                     + match other {
                         PlayerMove::Rock => 0,
                         PlayerMove::Paper => 6,
@@ -78,28 +78,39 @@ impl PlayerOutcome {
         }
     }
 
+    fn value(&self) -> i32 {
+        return match self {
+            Self::Lose => 0,
+            Self::Win => 6,
+            Self::Draw => 3,
+        };
+    }
+
     fn outcome(&self, other: PlayerMove) -> i32 {
         let value = match self {
             Self::Lose => {
-                0 + match other {
-                    PlayerMove::Rock => PlayerMove::Scissors.value(),
-                    PlayerMove::Paper => PlayerMove::Rock.value(),
-                    PlayerMove::Scissors => PlayerMove::Paper.value(),
-                }
+                self.value()
+                    + match other {
+                        PlayerMove::Rock => PlayerMove::Scissors.value(),
+                        PlayerMove::Paper => PlayerMove::Rock.value(),
+                        PlayerMove::Scissors => PlayerMove::Paper.value(),
+                    }
             }
             Self::Draw => {
-                3 + match other {
-                    PlayerMove::Rock => PlayerMove::Rock.value(),
-                    PlayerMove::Paper => PlayerMove::Paper.value(),
-                    PlayerMove::Scissors => PlayerMove::Scissors.value(),
-                }
+                self.value()
+                    + match other {
+                        PlayerMove::Rock => PlayerMove::Rock.value(),
+                        PlayerMove::Paper => PlayerMove::Paper.value(),
+                        PlayerMove::Scissors => PlayerMove::Scissors.value(),
+                    }
             }
             Self::Win => {
-                6 + match other {
-                    PlayerMove::Rock => PlayerMove::Paper.value(),
-                    PlayerMove::Paper => PlayerMove::Scissors.value(),
-                    PlayerMove::Scissors => PlayerMove::Rock.value(),
-                }
+                self.value()
+                    + match other {
+                        PlayerMove::Rock => PlayerMove::Paper.value(),
+                        PlayerMove::Paper => PlayerMove::Scissors.value(),
+                        PlayerMove::Scissors => PlayerMove::Rock.value(),
+                    }
             }
         };
 
