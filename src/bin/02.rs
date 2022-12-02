@@ -1,9 +1,3 @@
-// A Rock
-// B Papger
-// C Sc
-
-// X Rock
-
 #[derive(Debug)]
 enum PlayerMove {
     Rock,
