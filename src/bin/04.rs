@@ -1,20 +1,26 @@
+struct Section {
+    start: i32,
+    end: i32,
+}
+
+impl Section {
+    fn from(s: &str) -> Self {
+        let v = s
+            .split("-")
+            .map(str::parse::<i32>)
+            .map(Result::unwrap)
+            .collect::<Vec<i32>>();
+
+        Section {
+            start: v[0],
+            end: v[1],
+        }
+    }
+}
+
 pub fn part_one(input: &str) -> Option<i32> {
     Some(input.lines().fold(0, |acc, x| {
-        let ranges = x
-            .split(",")
-            .map(|r| {
-                let v = r
-                    .split("-")
-                    .map(str::parse::<i32>)
-                    .map(Result::unwrap)
-                    .collect::<Vec<i32>>();
-
-                std::ops::Range {
-                    start: v[0],
-                    end: v[1],
-                }
-            })
-            .collect::<Vec<std::ops::Range<i32>>>();
+        let ranges = x.split(",").map(Section::from).collect::<Vec<Section>>();
 
         if contains_range(&ranges[0], &ranges[1]) {
             acc + 1
@@ -26,22 +32,7 @@ pub fn part_one(input: &str) -> Option<i32> {
 
 pub fn part_two(input: &str) -> Option<i32> {
     Some(input.lines().fold(0, |acc, x| {
-        let ranges = x
-            .split(",")
-            .map(|r| {
-                let v = r
-                    .split("-")
-                    .map(str::parse::<i32>)
-                    .map(Result::unwrap)
-                    .collect::<Vec<i32>>();
-
-                std::ops::Range {
-                    start: v[0],
-                    end: v[1],
-                }
-            })
-            .collect::<Vec<std::ops::Range<i32>>>();
-
+        let ranges = x.split(",").map(Section::from).collect::<Vec<Section>>();
         if overlapping_range(&ranges[0], &ranges[1]) {
             acc + 1
         } else {
@@ -50,11 +41,11 @@ pub fn part_two(input: &str) -> Option<i32> {
     }))
 }
 
-fn contains_range(a: &std::ops::Range<i32>, b: &std::ops::Range<i32>) -> bool {
+fn contains_range(a: &Section, b: &Section) -> bool {
     a.start <= b.start && a.end >= b.end || b.start <= a.start && b.end >= a.end
 }
 
-fn overlapping_range(a: &std::ops::Range<i32>, b: &std::ops::Range<i32>) -> bool {
+fn overlapping_range(a: &Section, b: &Section) -> bool {
     a.start <= b.end && b.start <= a.end
 }
 
