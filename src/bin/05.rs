@@ -57,6 +57,14 @@ impl Stack {
 
         Stack { stacks: tmp_stack }
     }
+
+    fn stack_values(self) -> String {
+        self.stacks
+            .iter()
+            .map(|s| s.last())
+            .map(Option::unwrap)
+            .join("")
+    }
 }
 
 struct Instruction {
@@ -93,14 +101,8 @@ pub fn part_one(input: &str) -> Option<String> {
     // println!("parsed stacks {:?}", stack);
     let instructions = ins.split("\n").map(Instruction::from);
     let last = instructions.fold(s, |acc, x| acc.process_one(x));
-    let ff = last
-        .stacks
-        .iter()
-        .map(|s| s.last())
-        .map(Option::unwrap)
-        .join("");
 
-    Some(ff)
+    Some(last.stack_values())
 }
 
 pub fn part_two(input: &str) -> Option<String> {
@@ -116,14 +118,8 @@ pub fn part_two(input: &str) -> Option<String> {
     // println!("parsed stacks {:?}", stack);
     let instructions = ins.split("\n").map(Instruction::from);
     let last = instructions.fold(s, |acc, x| acc.process_multi(x));
-    let ff = last
-        .stacks
-        .iter()
-        .map(|s| s.last())
-        .map(Option::unwrap)
-        .join("");
 
-    Some(ff)
+    Some(last.stack_values())
 }
 
 fn main() {
