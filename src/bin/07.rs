@@ -1,123 +1,78 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
+use indextree::{Arena, NodeId};
 
-#[derive(Debug)]
-struct Dir {
-    name: String,
-    subdirs: HashMap<String, Rc<RefCell<Self>>>,
-    file_sizes: Vec<usize>,
+#[derive(Clone)]
+pub struct Entry<'a> {
+    name: &'a str,
+    size: u32,
 }
 
-impl Dir {
-    fn new(name: &str) -> Self {
-        Dir {
-            name: name.to_string(),
-            subdirs: HashMap::new(),
-            file_sizes: Vec::new(),
-        }
-    }
+type Input<'a> = Arena<Entry<'a>>;
+fn parse(input: &str) -> Input {
+    let mut arena = Arena::new();
+    let mut current_id = arena.new_node(Entry { name: "/", size: 0 });
 
-    fn size(&self) -> usize {
-        self.file_sizes.iter().sum::<usize>()
-            + self
-                .subdirs
-                .iter()
-                .map(|(_, dir)| dir.borrow().size())
-                .sum::<usize>()
-    }
-
-    fn size_if_under_100_000(&self) -> usize {
-        let actual_size = self.size();
-        let size_below_me = self
-            .subdirs
-            .iter()
-            .map(|(_, dir)| dir.borrow().size_if_under_100_000())
-            .sum::<usize>();
-
-        if actual_size <= 100_000 {
-            actual_size + size_below_me
-        } else {
-            size_below_me
-        }
-    }
-
-    fn get_all_sizes(&self) -> Vec<usize> {
-        let mut result = vec![self.size()];
-        for (_, dir) in &self.subdirs {
-            result.extend(dir.borrow().get_all_sizes());
-        }
-        result
-    }
-
-    fn from(input: &str) -> Rc<RefCell<Self>> {
-        let root = Rc::new(RefCell::new(Dir::new("/")));
-        let mut current = vec![Rc::clone(&root)];
-
-        for line in input.lines() {
-            let args = line.split_ascii_whitespace().collect::<Vec<&str>>();
-            match args[..] {
-                ["$", "cd", "/"] => {
-                    current.truncate(1);
+    input
+        .split("$ ")
+        .skip(2)
+        .map(|chunk| {
+            let (cmd, rest) = chunk.split_at(2);
+            (cmd, rest.trim())
+        })
+        .try_for_each(|cmd| {
+            match cmd {
+                ("cd", "..") => {
+                    current_id = arena.get(current_id)?.parent()?;
                 }
-                ["$", "cd", ".."] => {
-                    current.pop();
+                ("cd", dir) => {
+                    current_id = current_id
+                        .children(&arena)
+                        .find(|id| arena.get(*id).unwrap().get().name == dir)?;
                 }
-                ["$", "cd", directory] => {
-                    let new = Rc::clone(
-                        current
-                            .last()
-                            .unwrap()
-                            .borrow_mut()
-                            .subdirs
-                            .get(directory)
-                            .unwrap(),
-                    );
-                    current.push(new);
+                ("ls", rest) => {
+                    rest.lines().try_for_each(|l| {
+                        let (size, name) = l.split_once(' ')?;
+                        if size == "dir" {
+                            let id = arena.new_node(Entry { name, size: 0 });
+                            current_id.append(id, &mut arena);
+                        } else {
+                            let size = size.parse::<u32>().ok()?;
+                            current_id
+                                .ancestors(&arena)
+                                .collect::<Vec<NodeId>>()
+                                .into_iter()
+                                .for_each(|id| {
+                                    arena.get_mut(id).unwrap().get_mut().size += size;
+                                })
+                        }
+                        Some(())
+                    });
                 }
-                ["$", "ls"] => (),
-                ["dir", name] => {
-                    current
-                        .last_mut()
-                        .unwrap()
-                        .borrow_mut()
-                        .subdirs
-                        .insert(String::from(name), Rc::new(RefCell::new(Dir::new(name))));
-                }
-                [size, _name] => {
-                    current
-                        .last_mut()
-                        .unwrap()
-                        .borrow_mut()
-                        .file_sizes
-                        .push(size.parse::<usize>().unwrap_or(0));
-                }
-                _ => (),
+                _ => unreachable!(),
             }
-        }
 
-        root
-    }
+            Some(())
+        });
+
+    arena
 }
 
-pub fn part_one(input: &str) -> Option<usize> {
-    let p = Dir::from(input);
-    let x = p.borrow();
-    Some(x.size_if_under_100_000())
+pub fn part_one(input: &str) -> Option<u32> {
+    let arena = parse(input);
+    Some(
+        arena
+            .iter()
+            .map(|entry| entry.get().size)
+            .filter(|size| *size < 100000)
+            .sum(),
+    )
 }
 
-pub fn part_two(input: &str) -> Option<usize> {
-    let p = Dir::from(input);
-    let total_size = p.borrow().size();
-    let space_needed = total_size - 40_000_000;
-    let mut all_sizes: Vec<usize> = p
-        .borrow()
-        .get_all_sizes()
-        .into_iter()
-        .filter(|x| *x > space_needed)
-        .collect();
-    all_sizes.sort();
-    Some(all_sizes[0])
+pub fn part_two(input: &str) -> Option<u32> {
+    let arena = parse(input);
+    let mut values = arena.iter().map(|entry| entry.get().size);
+    let total_size = values.next()?;
+    let needed = total_size + 30000000 - 70000000;
+    values.filter(|x| *x >= needed).min()
 }
 
 fn main() {
